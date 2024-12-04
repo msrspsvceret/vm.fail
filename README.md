@@ -1,6 +1,6 @@
 # 3itch.github.io
 
-<pre>
+<h1><pre style="margin: 0; color: #fff; white-space: pre-wrap; word-break: break-all; position: relative; z-index: 99999; user-select: none;">
                                                                      -+                             
                                                                     -----                           
                                                                    ---------                        
@@ -81,7 +81,7 @@
                                                                                                     
                                                                                                     
 
-</pre>
+</pre></h1>
 
 ### Hi!
 
