@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <!-- this is a totally meaningless comment -->
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -35,6 +36,21 @@
             --viewer-width: 50%;
         }
 
+        #sourceCode {
+            background-color: #202124 !important;
+            line-height: 1.7em;
+        }
+
+        ::selection {
+            background-color: #93c5fd;
+            color: #1d1d1d;
+        }
+
+        ::-moz-selection {
+            background-color: #93c5fd;
+            color: #1d1d1d;
+        }
+
         body {
             background-color: rgb(10 10 10);
             font-family: "Inter", sans-serif;
@@ -67,9 +83,10 @@
             transform: translateX(0);
         }
 
-        #sourceCode {
-            background-color: #202124 !important;
-            line-height: 1.7em;
+        #sourceCode,
+        #sourceCode * {
+            background-color: #111111 !important;
+            line-height: 1.5em;
             user-select: text !important;
         }
 
