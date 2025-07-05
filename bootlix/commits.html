@@ -136,7 +136,7 @@
           resultsDiv.innerHTML = "";
           try {
             const response = await fetch(
-              `${this.workerBaseUrl}/commits?project=${project}`
+              `${this.workerBaseUrl}/bootlix/commits?project=${project}`
             );
             if (!response.ok) throw new Error(`API Error: ${response.status}`);
             const html = await response.text();
