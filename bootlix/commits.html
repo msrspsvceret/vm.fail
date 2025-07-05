@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Commit Viewer - Bootlix</title>
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: { extend: { fontFamily: { mono: ["Inter", "sans-serif"] } } },
+      };
+    </script>
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+
+      ::selection {
+        background-color: #93c5fd;
+        color: #1d1d1d;
+      }
+
+      ::-moz-selection {
+        background-color: #93c5fd;
+        color: #1d1d1d;
+      }
+    </style>
+  </head>
+
+  <body class="bg-white dark:bg-neutral-950 text-gray-800 dark:text-gray-100">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+      <header class="mb-8 flex justify-between items-center">
+        <div>
+          <h1 class="text-4xl font-bold text-blue-600 dark:text-blue-400">
+            Upstream Commits
+          </h1>
+          <p class="text-gray-600 dark:text-gray-300">
+            View the latest commits from project repositories.
+          </p>
+        </div>
+        <div class="flex items-center gap-6">
+          <a href="/" class="text-blue-500 dark:text-blue-400 hover:underline"
+            >&larr; Back to Search</a
+          >
+          <button
+            id="site-theme-toggle"
+            class="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-neutral-800"
+            title="Toggle Light/Dark Mode"
+          ></button>
+        </div>
+      </header>
+      <div class="mb-6">
+        <label
+          for="commit-project-selector"
+          class="block text-sm font-medium mb-2"
+          >Select a Project:</label
+        >
+        <select
+          id="commit-project-selector"
+          name="project"
+          class="w-full md:w-1/2 px-3 py-2 bg-white dark:bg-neutral-950 border border-gray-300 dark:border-neutral-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+        >
+          <option value="linux">Linux Kernel</option>
+          <option value="u-boot">U-Boot</option>
+          <option value="glibc">GNU C Library</option>
+          <option value="qemu">QEMU</option>
+          <option value="coreboot">Coreboot</option>
+          <option value="musl">musl libc</option>
+          <option value="arm-trusted-firmware">ARM Trusted Firmware</option>
+          <option value="op-tee">OP-TEE</option>
+          <option value="xen">Xen</option>
+          <option value="busybox">BusyBox</option>
+          <option value="toybox">Toybox</option>
+          <option value="zephyr">Zephyr</option>
+        </select>
+      </div>
+      <div id="commit-results">
+        <p class="text-center text-gray-500 dark:text-gray-400 py-8">
+          Please select a project to view commits.
+        </p>
+      </div>
+      <div id="spinner" class="text-center py-4" style="display: none">
+        <div
+          class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-400 mx-auto"
+        ></div>
+      </div>
+    </div>
+    <script>
+      const themeManager = {
+        sunIcon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`,
+        moonIcon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`,
+        init() {
+          const siteThemeToggle = document.getElementById("site-theme-toggle");
+          siteThemeToggle.addEventListener("click", () =>
+            this.toggleSiteTheme()
+          );
+          const savedSiteTheme = localStorage.getItem("siteTheme");
+          const isDarkMode =
+            savedSiteTheme === "dark" ||
+            (savedSiteTheme === null &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          this.updateSiteTheme(isDarkMode);
+        },
+        toggleSiteTheme() {
+          const isDark = document.documentElement.classList.toggle("dark");
+          localStorage.setItem("siteTheme", isDark ? "dark" : "light");
+          this.updateSiteTheme(isDark);
+        },
+        updateSiteTheme(isDark) {
+          const siteThemeToggle = document.getElementById("site-theme-toggle");
+          document.documentElement.classList.toggle("dark", isDark);
+          siteThemeToggle.innerHTML = isDark ? this.sunIcon : this.moonIcon;
+        },
+      };
+      const commitViewer = {
+        workerBaseUrl: "https://vm-fail.ner9211.workers.dev",
+        init() {
+          document
+            .getElementById("commit-project-selector")
+            .addEventListener("change", (e) =>
+              this.fetchCommits(e.target.value)
+            );
+        },
+        async fetchCommits(project) {
+          const resultsDiv = document.getElementById("commit-results");
+          const spinner = document.getElementById("spinner");
+          spinner.style.display = "block";
+          resultsDiv.innerHTML = "";
+          try {
+            const response = await fetch(
+              `${this.workerBaseUrl}/commits?project=${project}`
+            );
+            if (!response.ok) throw new Error(`API Error: ${response.status}`);
+            const html = await response.text();
+            resultsDiv.innerHTML = html;
+          } catch (error) {
+            resultsDiv.innerHTML = `<div class="text-red-400 p-4">Error fetching commits: ${error.message}</div>`;
+          } finally {
+            spinner.style.display = "none";
+          }
+        },
+      };
+      document.addEventListener("DOMContentLoaded", () => {
+        themeManager.init();
+        commitViewer.init();
+      });
+    </script>
+  </body>
+</html>
